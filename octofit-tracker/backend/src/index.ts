@@ -1,14 +1,13 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import usersRouter from './routes/users';
 import teamsRouter from './routes/teams';
 import activitiesRouter from './routes/activities';
 import leaderboardRouter from './routes/leaderboard';
 import workoutsRouter from './routes/workouts';
 import { getAPIBaseURL, logAPIInfo } from './utils/codespaces';
+import { connectDatabase } from './config/database';
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/octofit_db';
 
 const app = express();
 app.use(express.json());
@@ -23,16 +22,19 @@ app.use('/api/activities', activitiesRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 app.use('/api/workouts', workoutsRouter);
 
-mongoose
-  .connect(MONGO_URI)
+connectDatabase()
   .then(() => {
-    console.log('Connected to MongoDB');
     app.listen(PORT, () => {
-      console.log(`Server running on ${getAPIBaseURL()}`);
+      const apiURL = getAPIBaseURL();
+      console.log(`\n🚀 API Server running on ${apiURL}`);
+      console.log(`📊 Health check: ${apiURL}/health`);
+      console.log(`👥 Users: ${apiURL}/api/users`);
+      console.log(`🏃 Activities: ${apiURL}/api/activities`);
+      console.log(`\n`);
       logAPIInfo();
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   });
